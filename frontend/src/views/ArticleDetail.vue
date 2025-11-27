@@ -1,8 +1,14 @@
 <template>
   <div class="article-detail-container" v-if="article">
     <h1>{{ article.title }}</h1>
-    <p class="meta">By {{ article.author?.username }} on {{ formatDate(article.created_at) }}</p>
-    <div class="content">{{ article.content }}</div>
+    <p class="meta">
+      By {{ article.author?.username }} on {{ formatDate(article.created_at) }}
+      <span v-if="article.category"> | Category: <strong>{{ article.category.name }}</strong></span>
+    </p>
+    <div class="tags" v-if="article.tags && article.tags.length">
+      <span v-for="tag in article.tags" :key="tag.id" class="tag">#{{ tag.name }}</span>
+    </div>
+    <div class="content" v-html="renderedContent"></div>
     
     <div class="actions" v-if="isAuthor">
       <router-link :to="'/articles/' + article.id + '/edit'" class="edit-btn">Edit</router-link>
@@ -30,6 +36,8 @@ import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import api from '../api/axios';
 import { useAuthStore } from '../stores/auth';
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 
 const route = useRoute();
 const router = useRouter();
@@ -40,6 +48,11 @@ const comments = ref([]);
 const newComment = ref('');
 const loading = ref(true);
 const error = ref('');
+
+const renderedContent = computed(() => {
+  if (!article.value || !article.value.content) return '';
+  return DOMPurify.sanitize(marked(article.value.content));
+});
 
 const isAuthor = computed(() => {
   // Note: In a real app, you'd decode the token to get the user ID or store it in the auth store
@@ -140,5 +153,16 @@ textarea {
   width: 100%;
   height: 60px;
   margin-bottom: 10px;
+}
+.tags {
+  margin-bottom: 20px;
+}
+.tag {
+  background-color: #eee;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  margin-right: 8px;
+  color: #555;
 }
 </style>

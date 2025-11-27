@@ -9,13 +9,17 @@ import (
 )
 
 type CreateArticleInput struct {
-	Title   string `json:"title" binding:"required"`
-	Content string `json:"content" binding:"required"`
+	Title      string   `json:"title" binding:"required"`
+	Content    string   `json:"content" binding:"required"`
+	CategoryID *uint    `json:"category_id"`
+	Tags       []string `json:"tags"` // List of tag names
 }
 
 type UpdateArticleInput struct {
-	Title   string `json:"title"`
-	Content string `json:"content"`
+	Title      string   `json:"title"`
+	Content    string   `json:"content"`
+	CategoryID *uint    `json:"category_id"`
+	Tags       []string `json:"tags"`
 }
 
 func CreateArticle(c *gin.Context) {
@@ -31,10 +35,22 @@ func CreateArticle(c *gin.Context) {
 		return
 	}
 
+	// Handle Tags
+	var tags []models.Tag
+	for _, tagName := range input.Tags {
+		var tag models.Tag
+		if err := database.DB.FirstOrCreate(&tag, models.Tag{Name: tagName}).Error; err != nil {
+			continue
+		}
+		tags = append(tags, tag)
+	}
+
 	article := models.Article{
-		Title:    input.Title,
-		Content:  input.Content,
-		AuthorID: userID.(uint),
+		Title:      input.Title,
+		Content:    input.Content,
+		AuthorID:   userID.(uint),
+		CategoryID: input.CategoryID,
+		Tags:       tags,
 	}
 
 	if err := database.DB.Create(&article).Error; err != nil {
@@ -42,16 +58,24 @@ func CreateArticle(c *gin.Context) {
 		return
 	}
 
+	// Preload associations for response
+	database.DB.Preload("Author").Preload("Category").Preload("Tags").First(&article, article.ID)
+
 	c.JSON(http.StatusOK, article)
 }
 
 func GetArticles(c *gin.Context) {
 	var articles []models.Article
-	query := database.DB.Preload("Author")
+	query := database.DB.Preload("Author").Preload("Category").Preload("Tags")
 
 	search := c.Query("search")
 	if search != "" {
 		query = query.Where("title LIKE ? OR content LIKE ?", "%"+search+"%", "%"+search+"%")
+	}
+
+	categoryID := c.Query("category_id")
+	if categoryID != "" {
+		query = query.Where("category_id = ?", categoryID)
 	}
 
 	if err := query.Find(&articles).Error; err != nil {
@@ -63,9 +87,11 @@ func GetArticles(c *gin.Context) {
 }
 
 func GetArticle(c *gin.Context) {
+	id := c.Param("id")
 	var article models.Article
-	if err := database.DB.Preload("Author").Where("id = ?", c.Param("id")).First(&article).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Article not found"})
+
+	if err := database.DB.Preload("Author").Preload("Category").Preload("Tags").First(&article, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Article not found"})
 		return
 	}
 
@@ -73,9 +99,11 @@ func GetArticle(c *gin.Context) {
 }
 
 func UpdateArticle(c *gin.Context) {
+	id := c.Param("id")
 	var article models.Article
-	if err := database.DB.Where("id = ?", c.Param("id")).First(&article).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Article not found"})
+
+	if err := database.DB.First(&article, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Article not found"})
 		return
 	}
 
@@ -96,10 +124,38 @@ func UpdateArticle(c *gin.Context) {
 		return
 	}
 
-	if err := database.DB.Model(&article).Updates(models.Article{Title: input.Title, Content: input.Content}).Error; err != nil {
+	// Update basic fields
+	if input.Title != "" {
+		article.Title = input.Title
+	}
+	if input.Content != "" {
+		article.Content = input.Content
+	}
+	if input.CategoryID != nil {
+		article.CategoryID = input.CategoryID
+	}
+
+	// Update Tags if provided
+	if input.Tags != nil {
+		var tags []models.Tag
+		for _, tagName := range input.Tags {
+			var tag models.Tag
+			if err := database.DB.FirstOrCreate(&tag, models.Tag{Name: tagName}).Error; err != nil {
+				continue
+			}
+			tags = append(tags, tag)
+		}
+		// Replace tags
+		database.DB.Model(&article).Association("Tags").Replace(tags)
+	}
+
+	if err := database.DB.Save(&article).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	// Preload associations for response
+	database.DB.Preload("Author").Preload("Category").Preload("Tags").First(&article, article.ID)
 
 	c.JSON(http.StatusOK, article)
 }

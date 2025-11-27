@@ -60,6 +60,13 @@ func SetupRouter() *gin.Engine {
 
 			// Upload Route
 			v1.POST("/upload", middlewares.JwtAuthMiddleware(), controllers.UploadFile)
+
+			// Category Routes
+			v1.GET("/categories", controllers.GetCategories)
+			v1.POST("/categories", middlewares.JwtAuthMiddleware(), controllers.CreateCategory)
+
+			// Tag Routes
+			v1.GET("/tags", controllers.GetTags)
 		}
 	}
 

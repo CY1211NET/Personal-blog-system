@@ -11,7 +11,13 @@
         <h3>
           <router-link :to="'/articles/' + article.id">{{ article.title }}</router-link>
         </h3>
-        <p class="meta">By {{ article.author?.username }} on {{ formatDate(article.created_at) }}</p>
+        <p class="meta">
+          By {{ article.author?.username }} on {{ formatDate(article.created_at) }}
+          <span v-if="article.category"> | In <strong>{{ article.category.name }}</strong></span>
+        </p>
+        <div class="tags" v-if="article.tags && article.tags.length">
+          <span v-for="tag in article.tags" :key="tag.id" class="tag">#{{ tag.name }}</span>
+        </div>
         <p class="excerpt">{{ article.content.substring(0, 100) }}...</p>
       </div>
     </div>
@@ -27,11 +33,16 @@ import { useAuthStore } from '../stores/auth';
 const articles = ref([]);
 const loading = ref(true);
 const error = ref('');
+const searchQuery = ref('');
 const authStore = useAuthStore();
+let timeout = null;
 
 const fetchArticles = async () => {
+  loading.value = true;
   try {
-    const response = await api.get('/articles');
+    const response = await api.get('/articles', {
+      params: { search: searchQuery.value }
+    });
     articles.value = response.data;
   } catch (err) {
     error.value = 'Failed to load articles';
@@ -39,6 +50,13 @@ const fetchArticles = async () => {
   } finally {
     loading.value = false;
   }
+};
+
+const handleSearch = () => {
+  clearTimeout(timeout);
+  timeout = setTimeout(() => {
+    fetchArticles();
+  }, 300);
 };
 
 const formatDate = (dateString) => {
@@ -72,6 +90,17 @@ onMounted(() => {
   color: white;
   text-decoration: none;
   border-radius: 4px;
+}
+.tags {
+  margin-bottom: 10px;
+}
+.tag {
+  background-color: #eee;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.8em;
+  margin-right: 5px;
+  color: #666;
 }
 .error {
   color: red;
