@@ -16,18 +16,23 @@
           {{ loading ? $t('common.loading') : $t('auth.login_title') }}
         </button>
       </form>
-      <p class="auth-link">
+      <p class="auth-link" v-if="registrationAllowed">
         <router-link to="/register">{{ $t('auth.no_account') }}</router-link>
+      </p>
+      <p class="auth-link registration-info" v-else>
+        <span class="info-icon">ℹ️</span>
+        这是单用户博客系统，注册已关闭
       </p>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { useRouter } from 'vue-router';
 import { useToast } from '../composables/useToast';
+import api from '../api/axios';
 
 const loginInput = ref('');
 const password = ref('');
@@ -35,6 +40,16 @@ const authStore = useAuthStore();
 const router = useRouter();
 const toast = useToast();
 const loading = ref(false);
+const registrationAllowed = ref(true);
+
+const checkRegistrationStatus = async () => {
+  try {
+    const response = await api.get('/registration-status');
+    registrationAllowed.value = response.data.registration_allowed;
+  } catch (err) {
+    console.error('Failed to check registration status:', err);
+  }
+};
 
 const handleLogin = async () => {
   loading.value = true;
@@ -48,6 +63,10 @@ const handleLogin = async () => {
     loading.value = false;
   }
 };
+
+onMounted(() => {
+  checkRegistrationStatus();
+});
 </script>
 
 <style scoped>
@@ -85,5 +104,14 @@ const handleLogin = async () => {
   font-size: 0.9rem;
   border-top: 1px solid var(--surface-border);
   padding-top: var(--spacing-md);
+}
+
+.registration-info {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.info-icon {
+  margin-right: 0.5rem;
 }
 </style>

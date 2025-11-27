@@ -6,7 +6,8 @@
         "login": "Login",
         "register": "Register",
         "logout": "Logout",
-        "blog_name": "My Blog"
+        "blog_name": "My Blog",
+        "about": "About"
     },
     "common": {
         "loading": "Loading...",
@@ -27,8 +28,7 @@
         "new_category": "+ New Category",
         "select_category": "Select Category",
         "navigation": "Navigation",
-        "categories": "Categories",
-        "tags": "Tags"
+        "categories": "Categories"
     },
     "timeline": {
         "title": "Timeline"
@@ -47,5 +47,32 @@
         "title": "Comments",
         "placeholder": "Write a comment...",
         "post": "Post Comment"
+    },
+    "about": {
+        "edit_profile": "Edit Profile",
+        "bio_placeholder": "Add a bio to introduce yourself...",
+        "sponsor_me": "Sponsor Me",
+        "friends": "Friends",
+        "support_my_work": "Support My Work",
+        "close": "Close",
+        "avatar_url": "Avatar URL",
+        "bio": "Bio",
+        "social_links": "Social Links (JSON)",
+        "sponsor_links": "Sponsor Links (JSON)",
+        "friend_links": "Friend Links (JSON)",
+        "social_help": "Supported: qq, wechat, youtube, instagram, twitter, bilibili, douyin, facebook, tiktok, telegram, email, github, linkedin.<br>Format: <code>[{\"platform\": \"wechat\", \"name\": \"My WeChat\", \"url\": \"#\", \"hover_image\": \"https://qr.code\"}]</code><br>For email, use <code>mailto:your@email.com</code>.",
+        "sponsor_help": "Format: <code>[{\"platform\": \"patreon\", \"url\": \"...\"}]</code>",
+        "friend_help": "Format: <code>[{\"name\": \"Name\", \"url\": \"...\", \"avatar\": \"...\", \"description\": \"...\", \"hover_image\": \"...\"}]</code>",
+        "mode_visual": "Visual Editor",
+        "mode_json": "JSON Code/Import",
+        "add_item": "Add Item",
+        "remove": "Remove",
+        "platform": "Platform",
+        "name": "Name",
+        "url": "URL",
+        "hover_image": "Hover Image (Optional)",
+        "avatar": "Avatar URL",
+        "description": "Description",
+        "json_error": "JSON format error, please check input"
     }
 }

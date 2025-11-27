@@ -40,6 +40,7 @@
         </div>
         <router-link to="/">{{ $t('nav.home') }}</router-link>
         <router-link to="/timeline">{{ $t('timeline.title') }}</router-link>
+        <router-link to="/about">{{ $t('nav.about') }}</router-link>
         <template v-if="authStore.isAuthenticated">
           <router-link to="/articles/new">{{ $t('nav.write') }}</router-link>
           <router-link to="/profile">{{ $t('nav.profile') }}</router-link>

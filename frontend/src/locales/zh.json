@@ -6,7 +6,8 @@
         "login": "登录",
         "register": "注册",
         "logout": "退出",
-        "blog_name": "我的博客"
+        "blog_name": "我的博客",
+        "about": "关于"
     },
     "common": {
         "loading": "加载中...",
@@ -64,5 +65,32 @@
         "title": "评论",
         "placeholder": "写下你的评论...",
         "post": "发表评论"
+    },
+    "about": {
+        "edit_profile": "编辑资料",
+        "bio_placeholder": "添加简介...",
+        "sponsor_me": "赞助我",
+        "friends": "友情链接",
+        "support_my_work": "支持我的工作",
+        "close": "关闭",
+        "avatar_url": "头像 URL",
+        "bio": "简介",
+        "social_links": "社交链接 (JSON)",
+        "sponsor_links": "赞助链接 (JSON)",
+        "friend_links": "友链 (JSON)",
+        "social_help": "支持: qq, wechat, youtube, instagram, twitter, bilibili, douyin, facebook, tiktok, telegram, email, github, linkedin。<br>格式: <code>[{\"platform\": \"wechat\", \"name\": \"我的微信\", \"url\": \"#\", \"hover_image\": \"https://qr.code\"}]</code><br>邮箱请使用 <code>mailto:your@email.com</code>。",
+        "sponsor_help": "格式: <code>[{\"platform\": \"patreon\", \"url\": \"...\"}]</code>",
+        "friend_help": "格式: <code>[{\"name\": \"名称\", \"url\": \"...\", \"avatar\": \"...\", \"description\": \"...\", \"hover_image\": \"...\"}]</code>",
+        "mode_visual": "可视化编辑",
+        "mode_json": "JSON 代码/导入",
+        "add_item": "添加一项",
+        "remove": "移除",
+        "platform": "平台",
+        "name": "名称",
+        "url": "链接",
+        "hover_image": "悬停图片 (可选)",
+        "avatar": "头像 URL",
+        "description": "描述",
+        "json_error": "JSON 格式错误，请检查输入"
     }
 }
