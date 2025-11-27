@@ -103,7 +103,11 @@ func GetProfile(c *gin.Context) {
 }
 
 type UpdateProfileInput struct {
-	AvatarURL string `json:"avatar_url"`
+	AvatarURL    string `json:"avatar_url"`
+	Bio          string `json:"bio"`
+	SocialLinks  string `json:"social_links"`
+	SponsorLinks string `json:"sponsor_links"`
+	FriendLinks  string `json:"friend_links"`
 }
 
 func UpdateProfile(c *gin.Context) {
@@ -125,9 +129,14 @@ func UpdateProfile(c *gin.Context) {
 		return
 	}
 
+	// Update all fields
 	if input.AvatarURL != "" {
 		user.AvatarURL = input.AvatarURL
 	}
+	user.Bio = input.Bio
+	user.SocialLinks = input.SocialLinks
+	user.SponsorLinks = input.SponsorLinks
+	user.FriendLinks = input.FriendLinks
 
 	if err := database.DB.Save(&user).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
