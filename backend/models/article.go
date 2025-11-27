@@ -15,6 +15,8 @@ type Article struct {
 	CategoryID *uint          `json:"category_id"`
 	Category   Category       `gorm:"foreignKey:CategoryID" json:"category"`
 	Tags       []Tag          `gorm:"many2many:article_tags;" json:"tags"`
+	Views      uint           `json:"views"`
+	Likes      uint           `json:"likes"`
 	CreatedAt  time.Time      `json:"created_at"`
 	UpdatedAt  time.Time      `json:"updated_at"`
 	DeletedAt  gorm.DeletedAt `gorm:"index" json:"-"`

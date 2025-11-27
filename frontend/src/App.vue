@@ -5,6 +5,7 @@
       <router-link to="/">Home</router-link>
       <template v-if="authStore.isAuthenticated">
         <router-link to="/articles/new">Write</router-link>
+        <router-link to="/profile">Profile</router-link>
         <a href="#" @click.prevent="logout">Logout</a>
       </template>
       <template v-else>

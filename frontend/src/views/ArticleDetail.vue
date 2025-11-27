@@ -4,12 +4,19 @@
     <p class="meta">
       By {{ article.author?.username }} on {{ formatDate(article.created_at) }}
       <span v-if="article.category"> | Category: <strong>{{ article.category.name }}</strong></span>
+      <span> | Views: {{ article.views }}</span>
     </p>
     <div class="tags" v-if="article.tags && article.tags.length">
       <span v-for="tag in article.tags" :key="tag.id" class="tag">#{{ tag.name }}</span>
     </div>
     <div class="content" v-html="renderedContent"></div>
     
+    <div class="interactions">
+      <button @click="likeArticle" :disabled="liked" class="like-btn">
+        {{ liked ? 'Liked' : 'Like' }} ({{ article.likes }})
+      </button>
+    </div>
+
     <div class="actions" v-if="isAuthor">
       <router-link :to="'/articles/' + article.id + '/edit'" class="edit-btn">Edit</router-link>
       <button @click="deleteArticle" class="delete-btn">Delete</button>
@@ -42,43 +49,6 @@ import DOMPurify from 'dompurify';
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
-
-const article = ref(null);
-const comments = ref([]);
-const newComment = ref('');
-const loading = ref(true);
-const error = ref('');
-
-const renderedContent = computed(() => {
-  if (!article.value || !article.value.content) return '';
-  return DOMPurify.sanitize(marked(article.value.content));
-});
-
-const isAuthor = computed(() => {
-  // Note: In a real app, you'd decode the token to get the user ID or store it in the auth store
-  // For now, we'll assume the backend handles permission checks, but UI hiding needs user ID
-  // This is a simplification. Ideally authStore.user should have the ID.
-  return authStore.isAuthenticated; // Simplified: show buttons if logged in, backend will reject if not author
-});
-
-const fetchArticle = async () => {
-  try {
-    const response = await api.get(`/articles/${route.params.id}`);
-    article.value = response.data;
-    fetchComments();
-  } catch (err) {
-    error.value = 'Failed to load article';
-  } finally {
-    loading.value = false;
-  }
-};
-
-const fetchComments = async () => {
-  try {
-    const response = await api.get(`/articles/${route.params.id}/comments`);
-    comments.value = response.data;
-  } catch (err) {
-    console.error('Failed to load comments');
   }
 };
 
@@ -164,5 +134,28 @@ textarea {
   font-size: 0.9em;
   margin-right: 8px;
   color: #555;
+}
+.interactions {
+  margin: 20px 0;
+  border-top: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+  padding: 10px 0;
+}
+.like-btn {
+  background-color: #ff4757;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 1em;
+  transition: background-color 0.2s;
+}
+.like-btn:disabled {
+  background-color: #ff6b81;
+  cursor: default;
+}
+.like-btn:hover:not(:disabled) {
+  background-color: #e84118;
 }
 </style>

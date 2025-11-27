@@ -185,3 +185,28 @@ func DeleteArticle(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Article deleted successfully"})
 }
+
+func LikeArticle(c *gin.Context) {
+	var article models.Article
+	if err := database.DB.First(&article, c.Param("id")).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Article not found"})
+		return
+	}
+
+	// In a real app, you'd track *who* liked it to prevent duplicates
+	article.Likes++
+	database.DB.Save(&article)
+	c.JSON(http.StatusOK, gin.H{"likes": article.Likes})
+}
+
+func ViewArticle(c *gin.Context) {
+	var article models.Article
+	if err := database.DB.First(&article, c.Param("id")).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Article not found"})
+		return
+	}
+
+	article.Views++
+	database.DB.Save(&article)
+	c.JSON(http.StatusOK, gin.H{"views": article.Views})
+}

@@ -26,17 +26,17 @@ func SetupRouter() *gin.Engine {
 				auth.POST("/login", controllers.Login)
 			}
 
-			protected := v1.Group("/user")
-			protected.Use(middlewares.JwtAuthMiddleware())
+			user := v1.Group("/user")
+			user.Use(middlewares.JwtAuthMiddleware())
 			{
-				protected.GET("/profile", func(c *gin.Context) {
-					c.JSON(200, gin.H{"message": "Welcome to protected route"})
-				})
+				user.GET("/profile", controllers.GetProfile)
+				user.PUT("/profile", controllers.UpdateProfile)
 			}
 
 			// Public Article Routes
 			v1.GET("/articles", controllers.GetArticles)
 			v1.GET("/articles/:id", controllers.GetArticle)
+			v1.POST("/articles/:id/view", controllers.ViewArticle)
 
 			// Protected Article Routes
 			articles := v1.Group("/articles")
@@ -46,6 +46,7 @@ func SetupRouter() *gin.Engine {
 				articles.PUT("/:id", controllers.UpdateArticle)
 				articles.DELETE("/:id", controllers.DeleteArticle)
 				articles.POST("/:id/comments", controllers.CreateComment)
+				articles.POST("/:id/like", controllers.LikeArticle)
 			}
 
 			// Public Comment Routes
