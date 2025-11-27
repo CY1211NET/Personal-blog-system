@@ -19,7 +19,7 @@
           v-for="tag in tags" 
           :key="tag.id" 
           class="tag-pill"
-          @click.prevent="$emit('filter', { search: '#' + tag.name })"
+          @click.prevent="$emit('filter', { tag_id: tag.id })"
         >
           {{ tag.name }}
         </a>
