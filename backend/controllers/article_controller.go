@@ -78,6 +78,11 @@ func GetArticles(c *gin.Context) {
 		query = query.Where("category_id = ?", categoryID)
 	}
 
+	tagID := c.Query("tag_id")
+	if tagID != "" {
+		query = query.Joins("JOIN article_tags ON article_tags.article_id = articles.id").Where("article_tags.tag_id = ?", tagID)
+	}
+
 	if err := query.Find(&articles).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

@@ -9,6 +9,9 @@ import (
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
 
+	// CORS Middleware
+	r.Use(middlewares.CORSMiddleware())
+
 	// Ping test
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
@@ -32,6 +35,10 @@ func SetupRouter() *gin.Engine {
 				user.GET("/profile", controllers.GetProfile)
 				user.PUT("/profile", controllers.UpdateProfile)
 			}
+
+			// Public User Routes
+			v1.GET("/author-profile", controllers.GetAuthorProfile)
+			v1.GET("/registration-status", controllers.CheckRegistrationStatus)
 
 			// Public Article Routes
 			v1.GET("/articles", controllers.GetArticles)

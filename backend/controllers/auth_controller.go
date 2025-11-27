@@ -28,6 +28,14 @@ func Register(c *gin.Context) {
 		return
 	}
 
+	// Check if a user already exists (single user blog)
+	var count int64
+	database.DB.Model(&models.User{}).Count(&count)
+	if count > 0 {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Registration is closed. This is a single-user blog."})
+		return
+	}
+
 	u := models.User{
 		Username: input.Username,
 		Email:    input.Email,
@@ -127,4 +135,27 @@ func UpdateProfile(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, user)
+}
+
+func GetAuthorProfile(c *gin.Context) {
+	// For single user blog, just get the first user or specific ID.
+	// Let's assume ID 1 is the admin/author.
+	var user models.User
+	if err := database.DB.First(&user, 1).Error; err != nil {
+		// Try first user if ID 1 not found (maybe different ID)
+		if err := database.DB.First(&user).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Author not found"})
+			return
+		}
+	}
+	c.JSON(http.StatusOK, user)
+}
+
+func CheckRegistrationStatus(c *gin.Context) {
+	var count int64
+	database.DB.Model(&models.User{}).Count(&count)
+	c.JSON(http.StatusOK, gin.H{
+		"registration_allowed": count == 0,
+		"user_count":           count,
+	})
 }
