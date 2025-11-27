@@ -59,12 +59,12 @@
       <!-- Table of Contents -->
       <div class="toc-sidebar" :class="{ 'collapsed': !showToc }" v-if="toc.length > 0">
         <div class="toc-card card">
-          <div class="toc-header">
-            <h3>TOC</h3>
+          <div class="toc-header" :class="{ 'header-collapsed': !showToc }">
+            <h3 v-show="showToc">TOC</h3>
             <div class="toc-controls">
-              <button @click="expandAll" title="Expand All" class="icon-btn">+</button>
-              <button @click="collapseAll" title="Collapse All" class="icon-btn">-</button>
-              <button @click="toggleToc" title="Toggle TOC" class="icon-btn">
+              <button v-show="showToc" @click="expandAll" title="Expand All" class="icon-btn">+</button>
+              <button v-show="showToc" @click="collapseAll" title="Collapse All" class="icon-btn">-</button>
+              <button @click="toggleToc" title="Toggle TOC" class="icon-btn toggle-btn">
                 {{ showToc ? '>>' : '<<' }}
               </button>
             </div>
@@ -597,8 +597,27 @@ onUnmounted(() => {
 }
 
 .toc-sidebar.collapsed {
-  width: 50px;
+  width: 60px; /* Slightly wider to fit button comfortably */
   overflow: hidden;
+}
+
+.toc-sidebar.collapsed .toc-card {
+  padding: 10px 5px;
+  display: flex;
+  justify-content: center;
+}
+
+.toc-header.header-collapsed {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+  justify-content: center;
+  width: 100%;
+}
+
+.toc-header.header-collapsed .toc-controls {
+  width: 100%;
+  justify-content: center;
 }
 
 .toc-card {
