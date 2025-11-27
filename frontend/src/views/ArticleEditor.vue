@@ -1,37 +1,42 @@
 <template>
-  <div class="editor-container">
-    <h2>{{ isEditing ? 'Edit Article' : 'New Article' }}</h2>
-    <form @submit.prevent="saveArticle">
-      <div class="form-group">
-        <label for="title">Title</label>
-        <input type="text" id="title" v-model="title" required />
-      </div>
-      
-      <div class="form-group">
-        <label for="category">Category</label>
-        <select id="category" v-model="selectedCategory">
-          <option value="">Select Category</option>
-          <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-        </select>
-        <button type="button" @click="createCategory" style="margin-top: 5px; font-size: 0.8em;">+ New Category</button>
-      </div>
-
-      <div class="form-group">
-        <label for="tags">Tags (comma separated)</label>
-        <input type="text" id="tags" v-model="tagsInput" placeholder="tech, coding, life" />
-      </div>
-
-      <div class="form-group">
-        <label for="content">Content (Markdown supported)</label>
-        <div class="editor-layout">
-          <textarea id="content" v-model="content" required class="editor-textarea"></textarea>
-          <div class="preview" v-html="renderedContent"></div>
+  <div class="editor-container fade-in">
+    <div class="card">
+      <h2 class="text-center">{{ isEditing ? $t('common.edit') : $t('article.write_new') }}</h2>
+      <form @submit.prevent="saveArticle">
+        <div class="form-group">
+          <label for="title">{{ $t('article.title') }}</label>
+          <input type="text" id="title" v-model="title" required placeholder="ENTER TITLE" />
         </div>
-      </div>
-      <button type="submit" :disabled="loading">
-        {{ loading ? 'Saving...' : 'Save Article' }}
-      </button>
-    </form>
+        
+        <div class="form-group">
+          <label for="category">{{ $t('article.category') }}</label>
+          <div class="flex gap-2">
+            <select id="category" v-model="selectedCategory">
+              <option value="">{{ $t('article.select_category') }}</option>
+              <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+            </select>
+            <button type="button" @click="createCategory" class="btn btn-ghost">{{ $t('article.new_category') }}</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="tags">{{ $t('article.tags') }}</label>
+          <input type="text" id="tags" v-model="tagsInput" :placeholder="$t('article.tags_placeholder')" />
+        </div>
+
+        <div class="form-group">
+          <label>{{ $t('article.content') }}</label>
+          <div id="vditor" class="vditor-container"></div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" @click="$router.back()" class="btn btn-ghost">{{ $t('common.cancel') }}</button>
+          <button type="submit" :disabled="loading" class="btn btn-primary">
+            {{ loading ? $t('common.loading') : $t('common.save') }}
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 </template>
 
@@ -39,11 +44,13 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import api from '../api/axios';
-import { marked } from 'marked';
-import DOMPurify from 'dompurify';
+import { useToast } from '../composables/useToast';
+import Vditor from 'vditor';
+import 'vditor/dist/index.css';
 
 const route = useRoute();
 const router = useRouter();
+const toast = useToast();
 
 const title = ref('');
 const content = ref('');
@@ -51,19 +58,16 @@ const selectedCategory = ref('');
 const tagsInput = ref('');
 const categories = ref([]);
 const loading = ref(false);
+const vditor = ref(null);
 
 const isEditing = computed(() => route.params.id !== undefined);
-
-const renderedContent = computed(() => {
-  return DOMPurify.sanitize(marked(content.value || ''));
-});
 
 const fetchCategories = async () => {
   try {
     const response = await api.get('/categories');
     categories.value = response.data;
   } catch (err) {
-    console.error('Failed to load categories');
+    toast.error('Failed to load categories');
   }
 };
 
@@ -74,8 +78,9 @@ const createCategory = async () => {
     const response = await api.post('/categories', { name });
     categories.value.push(response.data);
     selectedCategory.value = response.data.id;
+    toast.success('Category created');
   } catch (err) {
-    alert('Failed to create category');
+    toast.error('Failed to create category');
   }
 };
 
@@ -88,18 +93,23 @@ const fetchArticle = async () => {
     content.value = article.content;
     selectedCategory.value = article.category_id || '';
     tagsInput.value = article.tags ? article.tags.map(t => t.name).join(', ') : '';
+    
+    if (vditor.value) {
+      vditor.value.setValue(content.value);
+    }
   } catch (err) {
-    alert('Failed to load article');
+    toast.error('Failed to load article');
     router.push('/');
   }
 };
 
 const saveArticle = async () => {
   loading.value = true;
+  const currentContent = vditor.value ? vditor.value.getValue() : content.value;
   const tags = tagsInput.value.split(',').map(t => t.trim()).filter(t => t);
   const payload = {
     title: title.value,
-    content: content.value,
+    content: currentContent,
     category_id: selectedCategory.value ? parseInt(selectedCategory.value) : null,
     tags: tags
   };
@@ -107,65 +117,124 @@ const saveArticle = async () => {
   try {
     if (isEditing.value) {
       await api.put(`/articles/${route.params.id}`, payload);
+      toast.success('Article updated');
     } else {
       await api.post('/articles/', payload);
+      toast.success('Article created');
     }
     router.push('/');
   } catch (err) {
-    alert('Failed to save article');
+    toast.error('Failed to save article');
   } finally {
     loading.value = false;
   }
 };
 
+const initVditor = () => {
+  vditor.value = new Vditor('vditor', {
+    height: 600,
+    mode: 'ir', // Instant Rendering mode (like Obsidian)
+    theme: 'dark',
+    placeholder: 'INITIATE DATA STREAM...',
+    toolbar: [
+      'emoji', 'headings', 'bold', 'italic', 'strike', 'link', '|',
+      'list', 'ordered-list', 'check', 'outdent', 'indent', '|',
+      'quote', 'line', 'code', 'inline-code', 'insert-before', 'insert-after', '|',
+      'upload', 'table', '|',
+      'undo', 'redo', '|',
+      'fullscreen', 'edit-mode',
+      {
+        name: 'more',
+        toolbar: [
+          'both',
+          'code-theme',
+          'content-theme',
+          'export',
+          'outline',
+          'preview',
+        ],
+      },
+    ],
+    cache: {
+      enable: false,
+    },
+    after: () => {
+      if (content.value) {
+        vditor.value.setValue(content.value);
+      }
+    },
+    input: (value) => {
+      content.value = value;
+    },
+    preview: {
+      theme: {
+        current: 'dark',
+        path: 'https://cdn.jsdelivr.net/npm/vditor/dist/css/content-theme',
+      },
+      hljs: {
+        style: 'atom-one-dark',
+      }
+    }
+  });
+};
+
 onMounted(() => {
   fetchCategories();
+  initVditor();
   fetchArticle();
 });
 </script>
 
 <style scoped>
 .editor-container {
-  max-width: 800px;
-  margin: 50px auto;
-  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
+
+.text-center {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+  color: var(--primary-color);
+  text-shadow: var(--neon-text-shadow);
+}
+
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: var(--spacing-lg);
 }
+
 label {
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: var(--spacing-xs);
+  color: var(--primary-color);
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+  letter-spacing: 1px;
 }
-input, textarea, select {
-  width: 100%;
-  padding: 10px;
-  box-sizing: border-box;
+
+/* Vditor Customization for Sci-Fi Theme */
+:deep(.vditor) {
+  border: 1px solid var(--primary-color) !important;
+  background-color: rgba(5, 5, 16, 0.9) !important;
+  --vditor-border-color: var(--surface-border);
+  --vditor-tool-icon-hover-color: var(--primary-color);
 }
-.editor-layout {
-  display: flex;
-  gap: 20px;
+
+:deep(.vditor-toolbar) {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  border-bottom: 1px solid var(--surface-border) !important;
 }
-.editor-textarea {
-  height: 400px;
-  width: 50%;
-  font-family: monospace;
+
+:deep(.vditor-content) {
+  background-color: transparent !important;
 }
-.preview {
-  width: 50%;
-  height: 400px;
-  overflow-y: auto;
-  border: 1px solid #ccc;
-  padding: 10px;
-  border-radius: 4px;
-  background-color: #f9f9f9;
+
+:deep(.vditor-reset) {
+  color: var(--text-primary) !important;
+  font-family: var(--font-body) !important;
 }
-button {
-  padding: 10px 20px;
-  background-color: #42b983;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+
+:deep(.vditor-textarea) {
+  background-color: transparent !important;
+  color: var(--text-primary) !important;
 }
 </style>

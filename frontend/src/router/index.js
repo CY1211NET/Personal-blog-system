@@ -33,9 +33,18 @@ const routes = [
     },
     {
         path: '/profile',
-        name: 'Profile',
         component: () => import('../views/Profile.vue'),
     },
+    {
+        path: '/timeline',
+        name: 'Timeline',
+        component: () => import('../views/Timeline.vue'),
+    },
 ];
+
+const router = createRouter({
+    history: createWebHistory(),
+    routes,
+});
 
 export default router;

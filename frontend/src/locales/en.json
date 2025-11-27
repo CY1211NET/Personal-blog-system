@@ -1,0 +1,51 @@
+{
+    "nav": {
+        "home": "Home",
+        "write": "Write",
+        "profile": "Profile",
+        "login": "Login",
+        "register": "Register",
+        "logout": "Logout",
+        "blog_name": "My Blog"
+    },
+    "common": {
+        "loading": "Loading...",
+        "save": "Save",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "edit": "Edit",
+        "submit": "Submit",
+        "search_placeholder": "Search articles...",
+        "confirm_delete": "Are you sure you want to delete this?"
+    },
+    "article": {
+        "title": "Title",
+        "content": "Content",
+        "category": "Category",
+        "tags": "Tags",
+        "tags_placeholder": "tech, life (comma separated)",
+        "new_category": "+ New Category",
+        "select_category": "Select Category",
+        "navigation": "Navigation",
+        "categories": "Categories",
+        "tags": "Tags"
+    },
+    "timeline": {
+        "title": "Timeline"
+    },
+    "auth": {
+        "login_title": "Login",
+        "register_title": "Register",
+        "username": "Username",
+        "password": "Password",
+        "email": "Email",
+        "no_account": "Don't have an account?",
+        "has_account": "Already have an account?",
+        "username_or_email": "Username or Email"
+    },
+    "comments": {
+        "title": "Comments",
+        "placeholder": "Write a comment...",
+        "post": "Post Comment"
+    }
+}

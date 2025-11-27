@@ -1,0 +1,68 @@
+{
+    "nav": {
+        "home": "首页",
+        "write": "写文章",
+        "profile": "个人资料",
+        "login": "登录",
+        "register": "注册",
+        "logout": "退出",
+        "blog_name": "我的博客"
+    },
+    "common": {
+        "loading": "加载中...",
+        "save": "保存",
+        "cancel": "取消",
+        "delete": "删除",
+        "edit": "编辑",
+        "submit": "提交",
+        "search_placeholder": "搜索文章...",
+        "confirm_delete": "确定要删除吗？"
+    },
+    "article": {
+        "title": "标题",
+        "content": "内容",
+        "category": "分类",
+        "tags": "标签",
+        "tags_placeholder": "技术, 生活 (逗号分隔)",
+        "new_category": "+ 新建分类",
+        "select_category": "选择分类",
+        "views": "阅读",
+        "likes": "点赞",
+        "liked": "已赞",
+        "like": "点赞",
+        "by": "作者",
+        "on": "发布于",
+        "in": "收录于",
+        "read_more": "阅读全文",
+        "write_new": "写新文章",
+        "list_view": "列表视图",
+        "markdown_supported": "支持 Markdown"
+    },
+    "profile": {
+        "title": "个人资料",
+        "uploading": "上传中..."
+    },
+    "sidebar": {
+        "navigation": "导航",
+        "categories": "分类",
+        "tags": "标签"
+    },
+    "timeline": {
+        "title": "时间轴"
+    },
+    "auth": {
+        "login_title": "登录",
+        "register_title": "注册",
+        "username": "用户名",
+        "password": "密码",
+        "email": "邮箱",
+        "no_account": "没有账号？",
+        "has_account": "已有账号？",
+        "username_or_email": "用户名或邮箱"
+    },
+    "comments": {
+        "title": "评论",
+        "placeholder": "写下你的评论...",
+        "post": "发表评论"
+    }
+}

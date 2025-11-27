@@ -1,47 +1,42 @@
 <template>
-  <div class="article-list-layout">
-    <div class="main-content">
-      <h2>Articles</h2>
-      <div class="search-bar">
-        <input type="text" v-model="searchQuery" @input="handleSearch" placeholder="Search articles..." />
-      </div>
-      <div v-if="loading">Loading articles...</div>
-      <div v-else-if="error" class="error">{{ error }}</div>
-      <div v-else>
-        <div v-for="article in articles" :key="article.id" class="article-card">
-          <h3>
-            <router-link :to="'/articles/' + article.id">{{ article.title }}</router-link>
-          </h3>
-          <p class="meta">
-            By {{ article.author?.username }} on {{ formatDate(article.created_at) }}
-            <span v-if="article.category"> | In <strong>{{ article.category.name }}</strong></span>
-          </p>
-          <div class="tags" v-if="article.tags && article.tags.length">
+  <div class="home-layout">
+    <div class="content-area">
+      <div v-if="loading" class="loading">{{ $t('common.loading') }}</div>
+      <div v-else class="article-list">
+        <div v-for="article in articles" :key="article.id" class="card article-card fade-in">
+          <router-link :to="'/articles/' + article.id" class="article-title">
+            <h2>{{ article.title }}</h2>
+          </router-link>
+          <div class="article-meta text-sm text-gray">
+            <span>{{ $t('article.by') }} {{ article.author?.username }}</span>
+            <span> • {{ formatDate(article.created_at) }}</span>
+            <span v-if="article.category"> • {{ $t('article.in') }} {{ article.category.name }}</span>
+            <span> • {{ article.views }} {{ $t('article.views') }}</span>
+          </div>
+          <p class="article-excerpt">{{ getExcerpt(article.content) }}</p>
+          <div class="article-tags" v-if="article.tags && article.tags.length">
             <span v-for="tag in article.tags" :key="tag.id" class="tag">#{{ tag.name }}</span>
           </div>
-          <p class="excerpt">{{ article.content.substring(0, 100) }}...</p>
+          <div class="read-more">
+            <router-link :to="'/articles/' + article.id" class="btn btn-ghost">{{ $t('article.read_more') }} →</router-link>
+          </div>
         </div>
       </div>
-      <router-link to="/articles/new" class="create-btn" v-if="authStore.isAuthenticated">Write Article</router-link>
     </div>
-    <div class="sidebar-container">
-      <Sidebar @filter-category="filterByCategory" @filter-tag="filterByTag" />
-    </div>
+    <Sidebar @filter="handleFilter" class="sidebar-area fade-in" />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import api from '../api/axios';
-import { useAuthStore } from '../stores/auth';
 import Sidebar from '../components/Sidebar.vue';
+import { marked } from 'marked';
 
+const route = useRoute();
 const articles = ref([]);
 const loading = ref(true);
-const error = ref('');
-const searchQuery = ref('');
-const authStore = useAuthStore();
-let timeout = null;
 
 const fetchArticles = async (params = {}) => {
   loading.value = true;
@@ -49,85 +44,102 @@ const fetchArticles = async (params = {}) => {
     const response = await api.get('/articles', { params });
     articles.value = response.data;
   } catch (err) {
-    error.value = 'Failed to load articles';
-    console.error(err);
+    console.error('Failed to fetch articles');
   } finally {
     loading.value = false;
   }
 };
 
-const handleSearch = () => {
-  clearTimeout(timeout);
-  timeout = setTimeout(() => {
-    fetchArticles({ search: searchQuery.value });
-  }, 300);
+const handleFilter = (filters) => {
+  fetchArticles(filters);
 };
 
-const filterByCategory = (categoryId) => {
-  fetchArticles({ category_id: categoryId });
-};
-
-const filterByTag = (tagName) => {
-  // Backend support for tag filtering needs to be implemented if not already
-  // For now, let's just search by tag name as a workaround or implement tag filtering in backend
-  fetchArticles({ search: tagName }); 
-};
+// Watch for search query changes from App.vue
+watch(() => route.query.search, (newSearch) => {
+  fetchArticles({ search: newSearch });
+});
 
 const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString();
 };
 
+const getExcerpt = (content) => {
+  if (!content) return '';
+  const text = content.replace(/[#*`]/g, ''); // Simple markdown strip
+  return text.length > 150 ? text.substring(0, 150) + '...' : text;
+};
+
 onMounted(() => {
-  fetchArticles();
+  // Initial fetch with query params if any
+  fetchArticles(route.query.search ? { search: route.query.search } : {});
 });
 </script>
 
 <style scoped>
-.article-list-layout {
-  display: flex;
-  gap: 30px;
-}
-.main-content {
-  flex: 3;
-}
-.sidebar-container {
-  flex: 1;
-}
-.article-card {
-  border-bottom: 1px solid #eee;
-  padding: 20px 0;
-}
-.meta {
-  color: #666;
-  font-size: 0.9em;
-}
-.create-btn {
-  display: inline-block;
-  margin-top: 20px;
-  padding: 10px 20px;
-  background-color: #42b983;
-  color: white;
-  text-decoration: none;
-  border-radius: 4px;
-}
-.tags {
-  margin-bottom: 10px;
-}
-.tag {
-  background-color: #eee;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 0.8em;
-  margin-right: 5px;
-  color: #666;
-}
-.error {
-  color: red;
+.home-layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: var(--spacing-xl);
 }
 
 @media (max-width: 768px) {
-  .article-list-layout {
-    flex-direction: column;
+  .home-layout {
+    grid-template-columns: 1fr;
   }
+}
+
+.article-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.article-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.article-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+  border-color: var(--primary-color);
+}
+
+.article-title {
+  text-decoration: none;
+  color: var(--text-primary);
+}
+
+.article-title h2 {
+  margin-bottom: var(--spacing-sm);
+  transition: color 0.3s ease;
+}
+
+.article-title:hover h2 {
+  color: var(--primary-color);
+  text-shadow: var(--neon-text-shadow);
+}
+
+.article-meta {
+  margin-bottom: var(--spacing-md);
+}
+
+.article-excerpt {
+  margin-bottom: var(--spacing-md);
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.article-tags {
+  margin-bottom: var(--spacing-md);
+}
+
+.tag {
+  margin-right: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--secondary-color);
+}
+
+.read-more {
+  text-align: right;
 }
 </style>
