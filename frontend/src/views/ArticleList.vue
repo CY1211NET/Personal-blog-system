@@ -13,7 +13,7 @@
             <span v-if="article.category"> • {{ $t('article.in') }} {{ article.category.name }}</span>
             <span> • {{ article.views }} {{ $t('article.views') }}</span>
           </div>
-          <p class="article-excerpt">{{ getExcerpt(article.content) }}</p>
+          <p class="article-excerpt" v-html="getExcerpt(article.content)"></p>
           <div class="article-tags" v-if="article.tags && article.tags.length">
             <span v-for="tag in article.tags" :key="tag.id" class="tag">#{{ tag.name }}</span>
           </div>
@@ -32,7 +32,7 @@ import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import api from '../api/axios';
 import Sidebar from '../components/Sidebar.vue';
-import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 
 const route = useRoute();
 const articles = ref([]);
@@ -65,8 +65,44 @@ const formatDate = (dateString) => {
 
 const getExcerpt = (content) => {
   if (!content) return '';
-  const text = content.replace(/[#*`]/g, ''); // Simple markdown strip
-  return text.length > 150 ? text.substring(0, 150) + '...' : text;
+  
+  // Strip markdown/HTML roughly to get plain text
+  let text = content.replace(/[#*`]/g, '')
+                    .replace(/!\[.*?\]\(.*?\)/g, '') // Remove images
+                    .replace(/\[.*?\]\(.*?\)/g, '$1') // Keep link text
+                    .replace(/<[^>]*>/g, ''); // Remove HTML tags
+
+  const query = route.query.search;
+
+  if (query && query.trim()) {
+    const lowerText = text.toLowerCase();
+    const lowerQuery = query.toLowerCase();
+    const index = lowerText.indexOf(lowerQuery);
+
+    if (index !== -1) {
+      // Found keyword
+      const start = Math.max(0, index - 50);
+      const end = Math.min(text.length, index + query.length + 100);
+      let snippet = text.substring(start, end);
+
+      // Add ellipses
+      if (start > 0) snippet = '...' + snippet;
+      if (end < text.length) snippet = snippet + '...';
+
+      // Escape HTML before adding highlight tags to prevent XSS
+      snippet = DOMPurify.sanitize(snippet, { ALLOWED_TAGS: [] });
+
+      // Highlight keyword (case-insensitive replacement)
+      const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+      snippet = snippet.replace(regex, '<mark class="highlight">$1</mark>');
+      
+      return snippet;
+    }
+  }
+
+  // Default behavior
+  const snippet = text.length > 150 ? text.substring(0, 150) + '...' : text;
+  return DOMPurify.sanitize(snippet, { ALLOWED_TAGS: [] });
 };
 
 onMounted(() => {
@@ -127,6 +163,16 @@ onMounted(() => {
   margin-bottom: var(--spacing-md);
   color: var(--text-secondary);
   line-height: 1.6;
+}
+
+/* Highlight style */
+:deep(mark.highlight) {
+  background-color: rgba(0, 243, 255, 0.2);
+  color: var(--primary-color);
+  padding: 0 2px;
+  border-radius: 2px;
+  font-weight: bold;
+  box-shadow: 0 0 5px rgba(0, 243, 255, 0.3);
 }
 
 .article-tags {
