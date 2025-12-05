@@ -112,16 +112,17 @@ func UpdateArticle(c *gin.Context) {
 		return
 	}
 
-	userID, exists := c.Get("user_id")
+	_, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	if article.AuthorID != userID.(uint) {
-		c.JSON(http.StatusForbidden, gin.H{"error": "You are not the author of this article"})
-		return
-	}
+	// Allow any logged-in user to update (Single User Blog / Admin mode)
+	// if article.AuthorID != userID.(uint) {
+	// 	c.JSON(http.StatusForbidden, gin.H{"error": "You are not the author of this article"})
+	// 	return
+	// }
 
 	var input UpdateArticleInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -172,16 +173,17 @@ func DeleteArticle(c *gin.Context) {
 		return
 	}
 
-	userID, exists := c.Get("user_id")
+	_, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	if article.AuthorID != userID.(uint) {
-		c.JSON(http.StatusForbidden, gin.H{"error": "You are not the author of this article"})
-		return
-	}
+	// Allow any logged-in user to delete
+	// if article.AuthorID != userID.(uint) {
+	// 	c.JSON(http.StatusForbidden, gin.H{"error": "You are not the author of this article"})
+	// 	return
+	// }
 
 	if err := database.DB.Delete(&article).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -189,6 +191,34 @@ func DeleteArticle(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Article deleted successfully"})
+}
+
+type BatchDeleteInput struct {
+	IDs []uint `json:"ids" binding:"required"`
+}
+
+func BatchDeleteArticles(c *gin.Context) {
+	var input BatchDeleteInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	_, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	// Delete articles where id IN input.IDs
+	// Removed author_id check to allow admin deletion of any article
+	result := database.DB.Where("id IN ?", input.IDs).Delete(&models.Article{})
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Articles deleted successfully", "count": result.RowsAffected})
 }
 
 func LikeArticle(c *gin.Context) {

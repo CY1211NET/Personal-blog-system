@@ -84,6 +84,8 @@ const createCategory = async () => {
   }
 };
 
+const vditorReady = ref(false);
+
 const fetchArticle = async () => {
   if (!isEditing.value) return;
   try {
@@ -94,7 +96,7 @@ const fetchArticle = async () => {
     selectedCategory.value = article.category_id || '';
     tagsInput.value = article.tags ? article.tags.map(t => t.name).join(', ') : '';
     
-    if (vditor.value) {
+    if (vditorReady.value && vditor.value) {
       vditor.value.setValue(content.value);
     }
   } catch (err) {
@@ -103,6 +105,7 @@ const fetchArticle = async () => {
   }
 };
 
+// ... saveArticle ...
 const saveArticle = async () => {
   loading.value = true;
   const currentContent = vditor.value ? vditor.value.getValue() : content.value;
@@ -159,6 +162,7 @@ const initVditor = () => {
       enable: false,
     },
     after: () => {
+      vditorReady.value = true;
       if (content.value) {
         vditor.value.setValue(content.value);
       }

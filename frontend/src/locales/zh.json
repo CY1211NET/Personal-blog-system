@@ -17,7 +17,8 @@
         "edit": "编辑",
         "submit": "提交",
         "search_placeholder": "搜索文章...",
-        "confirm_delete": "确定要删除吗？"
+        "confirm_delete": "确定要删除吗？",
+        "delete_selected": "批量删除"
     },
     "article": {
         "title": "标题",

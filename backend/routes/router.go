@@ -52,6 +52,7 @@ func SetupRouter() *gin.Engine {
 				articles.POST("/", controllers.CreateArticle)
 				articles.PUT("/:id", controllers.UpdateArticle)
 				articles.DELETE("/:id", controllers.DeleteArticle)
+				articles.POST("/batch-delete", controllers.BatchDeleteArticles)
 				articles.POST("/:id/comments", controllers.CreateComment)
 				articles.POST("/:id/like", controllers.LikeArticle)
 			}
@@ -72,9 +73,13 @@ func SetupRouter() *gin.Engine {
 			// Category Routes
 			v1.GET("/categories", controllers.GetCategories)
 			v1.POST("/categories", middlewares.JwtAuthMiddleware(), controllers.CreateCategory)
+			v1.PUT("/categories/:id", middlewares.JwtAuthMiddleware(), controllers.UpdateCategory)
+			v1.DELETE("/categories/:id", middlewares.JwtAuthMiddleware(), controllers.DeleteCategory)
 
 			// Tag Routes
 			v1.GET("/tags", controllers.GetTags)
+			v1.PUT("/tags/:id", middlewares.JwtAuthMiddleware(), controllers.UpdateTag)
+			v1.DELETE("/tags/:id", middlewares.JwtAuthMiddleware(), controllers.DeleteTag)
 		}
 	}
 

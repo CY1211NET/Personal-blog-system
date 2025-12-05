@@ -1,12 +1,27 @@
 <template>
   <div class="home-layout">
     <div class="content-area">
+      <!-- Toolbar for Batch Actions -->
+      <div v-if="authStore.isAuthenticated" class="toolbar fade-in">
+         <button v-if="selectedArticles.length > 0" @click="batchDelete" class="btn btn-danger">
+           {{ $t('common.delete_selected') }} ({{ selectedArticles.length }})
+         </button>
+      </div>
+
       <div v-if="loading" class="loading">{{ $t('common.loading') }}</div>
       <div v-else class="article-list">
         <div v-for="article in articles" :key="article.id" class="card article-card fade-in">
-          <router-link :to="'/articles/' + article.id" class="article-title">
-            <h2>{{ article.title }}</h2>
-          </router-link>
+          <div class="card-header-actions">
+            <!-- Checkbox for batch delete -->
+            <div v-if="authStore.isAuthenticated" class="checkbox-wrapper">
+               <input type="checkbox" :value="article.id" v-model="selectedArticles" class="custom-checkbox" />
+            </div>
+            
+            <router-link :to="'/articles/' + article.id" class="article-title">
+              <h2>{{ article.title }}</h2>
+            </router-link>
+          </div>
+
           <div class="article-meta text-sm text-gray">
             <span>{{ $t('article.by') }} {{ article.author?.username }}</span>
             <span> • {{ formatDate(article.created_at) }}</span>
@@ -17,8 +32,16 @@
           <div class="article-tags" v-if="article.tags && article.tags.length">
             <span v-for="tag in article.tags" :key="tag.id" class="tag">#{{ tag.name }}</span>
           </div>
-          <div class="read-more">
-            <router-link :to="'/articles/' + article.id" class="btn btn-ghost">{{ $t('article.read_more') }} →</router-link>
+          
+          <div class="card-footer">
+            <div class="read-more">
+              <router-link :to="'/articles/' + article.id" class="btn btn-ghost">{{ $t('article.read_more') }} →</router-link>
+            </div>
+            <!-- Edit/Delete Actions -->
+            <div v-if="authStore.isAuthenticated" class="article-actions">
+               <button @click.prevent="editArticle(article.id)" class="btn btn-sm btn-primary">{{ $t('common.edit') }}</button>
+               <button @click.prevent="deleteArticle(article.id)" class="btn btn-sm btn-danger">{{ $t('common.delete') }}</button>
+            </div>
           </div>
         </div>
       </div>
@@ -29,14 +52,21 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import api from '../api/axios';
 import Sidebar from '../components/Sidebar.vue';
 import DOMPurify from 'dompurify';
+import { useAuthStore } from '../stores/auth';
+import { useToast } from '../composables/useToast';
 
 const route = useRoute();
+const router = useRouter();
+const authStore = useAuthStore();
+const toast = useToast();
+
 const articles = ref([]);
 const loading = ref(true);
+const selectedArticles = ref([]);
 
 const fetchArticles = async (params = {}) => {
   loading.value = true;
@@ -105,6 +135,33 @@ const getExcerpt = (content) => {
   return DOMPurify.sanitize(snippet, { ALLOWED_TAGS: [] });
 };
 
+const editArticle = (id) => {
+  router.push(`/articles/${id}/edit`);
+};
+
+const deleteArticle = async (id) => {
+  if (!confirm('Are you sure you want to delete this article?')) return;
+  try {
+    await api.delete(`/articles/${id}`);
+    toast.success('Article deleted successfully');
+    fetchArticles();
+  } catch (err) {
+    toast.error('Failed to delete article');
+  }
+};
+
+const batchDelete = async () => {
+  if (!confirm(`Are you sure you want to delete ${selectedArticles.value.length} articles?`)) return;
+  try {
+    await api.post('/articles/batch-delete', { ids: selectedArticles.value });
+    toast.success('Articles deleted successfully');
+    selectedArticles.value = [];
+    fetchArticles();
+  } catch (err) {
+    toast.error('Failed to delete articles');
+  }
+};
+
 onMounted(() => {
   // Initial fetch with query params if any
   fetchArticles(route.query.search ? { search: route.query.search } : {});
@@ -132,6 +189,7 @@ onMounted(() => {
 
 .article-card {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
 }
 
 .article-card:hover {
@@ -140,9 +198,27 @@ onMounted(() => {
   border-color: var(--primary-color);
 }
 
+.card-header-actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.checkbox-wrapper {
+  padding-top: 0.5rem;
+}
+
+.custom-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--primary-color);
+}
+
 .article-title {
   text-decoration: none;
   color: var(--text-primary);
+  flex-grow: 1;
 }
 
 .article-title h2 {
@@ -185,7 +261,26 @@ onMounted(() => {
   color: var(--secondary-color);
 }
 
-.read-more {
-  text-align: right;
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--spacing-md);
+}
+
+.article-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+}
+
+.toolbar {
+  margin-bottom: var(--spacing-md);
+  display: flex;
+  justify-content: flex-end;
 }
 </style>

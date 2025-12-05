@@ -17,7 +17,8 @@
         "edit": "Edit",
         "submit": "Submit",
         "search_placeholder": "Search articles...",
-        "confirm_delete": "Are you sure you want to delete this?"
+        "confirm_delete": "Are you sure you want to delete this?",
+        "delete_selected": "Delete Selected"
     },
     "article": {
         "title": "Title",
@@ -28,7 +29,18 @@
         "new_category": "+ New Category",
         "select_category": "Select Category",
         "navigation": "Navigation",
-        "categories": "Categories"
+        "categories": "Categories",
+        "views": "Views",
+        "likes": "Likes",
+        "liked": "Liked",
+        "like": "Like",
+        "by": "By",
+        "on": "on",
+        "in": "in",
+        "read_more": "Read More",
+        "write_new": "Write New Article",
+        "list_view": "List View",
+        "markdown_supported": "Markdown Supported"
     },
     "timeline": {
         "title": "Timeline"
